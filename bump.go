@@ -18,10 +18,9 @@ import (
 	"strings"
 )
 
-// TODO fix 9->10 extra byte rolloff the "right" way
+// TODO detect git|mercurial|bzr|none
 // TODO hah, const must have value. doh. remove all that logic
 // TODO look at gopkg.in versioning, consider compatibility
-// TODO usage() info in --help
 
 const (
 	// VERSION is of the form:
