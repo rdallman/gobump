@@ -52,7 +52,7 @@ const (
 	// Below is a valid VERSION visible and modifiable by the gobump program.
 	// So this program can accept itself as input. Big woop.
 	//
-	VERSION = "0.0.10"
+	VERSION = "0.0.3"
 )
 
 type howhigh byte
