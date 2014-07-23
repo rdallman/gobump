@@ -1,7 +1,5 @@
 package main
 
-//
-
 import (
 	"bufio"
 	"fmt"
@@ -15,7 +13,7 @@ import (
 )
 
 const (
-	VERSION = "3.0.10"
+	VERSION = "hi"
 )
 
 // TODO look at gopkg.in versioning
@@ -59,20 +57,23 @@ OG:
 									}
 									defer fi.Close()
 
+									s, err := fi.Stat()
+									fmt.Println(s.Size())
+
 									r := bufio.NewReader(fi)
-									w := bufio.NewWriter(fi)
-									n, err := io.CopyN(w, r, int64(offset)) // copy up to version
-									fmt.Println(n, err)
-									n, err = io.CopyN(ioutil.Discard, r, int64(len)) // scrap the old
-									fmt.Println(n, err)
-									nt, err := io.WriteString(w, "hi") // write the new
-									fmt.Println(nt, err)
-									n, err = io.Copy(w, r) // write the rest
-									fmt.Println(n, err)
-									err = fi.Truncate(0)
-									fmt.Println(err) // print err, but disregard
-									err = w.Flush()
-									fmt.Println(err)
+									n, err := io.CopyN(ioutil.Discard, r, int64(offset+len)) // scrap the old
+									n, err = fi.Seek(int64(offset), 0)                       // less error prone
+									nt, err := io.WriteString(fi, `"hi"`)                    // write the new
+									n, err = io.Copy(fi, r)                                  // write the rest
+									_, _, _ = n, nt, err
+									//fmt.Println(w.Buffered())
+									//fmt.Println(n, err)
+									//err = fi.Truncate(0)
+									//fmt.Println(w.Buffered())
+									//fmt.Println(err) // print err, but disregard
+									//err = w.Flush()
+									//fmt.Println(w.Buffered())
+									//fmt.Println(err)
 									break OG
 								}
 							}
