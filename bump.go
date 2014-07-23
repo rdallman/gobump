@@ -52,7 +52,7 @@ const (
 	// Below is a valid VERSION visible and modifiable by the gobump program.
 	// So this program can accept itself as input. Big woop.
 	//
-	VERSION = "0.0.3"
+	VERSION = "0.0.4"
 )
 
 type howhigh byte
@@ -64,7 +64,7 @@ const (
 )
 
 var (
-	nocommit = flag.Bool("no-commit", false, "make a commit after bumping")
+	nocommit = flag.Bool("no-commit", false, "don't make a commit after bumping")
 	tag      = flag.Bool("tag", false, "tag the new commit, or if --no-commit, tag the current")
 	help     = flag.Bool("help", false, "show this message")
 )
@@ -72,15 +72,16 @@ var (
 func usage() {
 	fmt.Fprintln(os.Stderr, `usage: gobump [flags] [major|minor|patch]
 
-If [major|minor|patch] is not given, defaults to "patch"`)
+If [major|minor|patch] is not given, defaults to "patch"
+`)
 
 	flag.PrintDefaults()
-	os.Exit(2)
+	os.Exit(1)
 }
 
 func shortUsage() {
 	fmt.Fprintln(os.Stderr, `usage: gobump [flags] [major|minor|patch]`)
-	os.Exit(2)
+	os.Exit(1)
 }
 
 func main() {
