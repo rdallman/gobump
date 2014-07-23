@@ -1,3 +1,4 @@
+// Package provides simple version bumping CLI that is kept inside a go variable for use.
 package main
 
 import (
@@ -10,6 +11,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -35,7 +37,7 @@ const (
 	//
 	// Invoking gobump on a package will only increment XX, YY or ZZ by one.
 	// They are assumed to be numeric and puppies will die if you try to version
-	// otherwise. An empty value for VERSION is value.
+	// otherwise.
 	//
 	// VERSION can only be interpreted as a CONST at the package level,
 	// and its declaration may be placed in any file within a package.
@@ -43,7 +45,7 @@ const (
 	// Below is a valid VERSION visible and modifiable by the gobump program.
 	// So this program can accept itself as input. Big woop.
 	//
-	VERSION = "1.1.1"
+	VERSION = "0.0.2"
 )
 
 type howhigh byte
@@ -54,7 +56,13 @@ const (
 	Patch
 )
 
+// TODO hah, const must have value. remove all that logic
 // TODO look at gopkg.in versioning, consider compatibility
+
+var (
+	commit = flag.Bool("commit", false, "make a commit after bumping")
+	tag    = flag.Bool("tag", false, "tag commit, if combined with --commit will tag that commit")
+)
 
 func main() {
 	flag.Parse()
@@ -79,50 +87,72 @@ func main() {
 		}
 	}
 
-	bump, err := Bump(h, pwd)
+	fname, bump, err := Bump(h, pwd)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	fmt.Println(bump)
-
+	var out bool
 	// TODO git commit, tag
+	if *commit {
+		out = true
+		gitcommit(fname, bump)
+	}
+	if *tag {
+		gittag(bump)
+	}
+
+	if !out {
+		fmt.Println(bump)
+	}
 }
 
-func Bump(h howhigh, pkg string) (string, error) {
+func gitcommit(fname, version string) {
+	out, _ := exec.Command("git", "add", fname).CombinedOutput()
+	fmt.Printf("%s", string(out))
+	out, _ = exec.Command("git", "commit", "-m", version).CombinedOutput()
+	fmt.Printf("%s", string(out))
+}
+
+func gittag(version string) {
+	out, _ := exec.Command("git", "tag", version).CombinedOutput()
+	fmt.Printf("%s", string(out))
+}
+
+func Bump(h howhigh, pkg string) (fname, version string, err error) {
 	fset, pos, end, err := findVersion(pkg)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	fname, offset, len := extractInfos(fset, pos, end)
 
 	f, err := os.OpenFile(fname, os.O_RDWR, 0666)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	defer f.Close()
 
 	delimb, delime, old, err := extractOld(f, offset, len)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	newv, err := bump(h, old)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	fullversion := delimb + newv + delime
 
 	err = writeNew(f, fullversion, offset, len)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return newv, nil
+	return fname, newv, nil
 }
 
-func writeNew(f *os.File, v string, offset, len int64) error {
+func writeNew(f *os.File, v string, offset, length int64) error {
 	_, err := f.Seek(offset, 0) // less error prone
 	if err != nil {
 		return err
@@ -131,7 +161,8 @@ func writeNew(f *os.File, v string, offset, len int64) error {
 	if err != nil {
 		return err
 	}
-	r := io.NewSectionReader(f, offset+len, stat.Size()-offset+len)
+	// TODO this is just off, need to get a separate reader and writer for file
+	r := io.NewSectionReader(f, offset+int64(len(v)), stat.Size()-offset+length)
 	_, err = f.Seek(offset, 0) // less error prone
 	if err != nil {
 		return err
