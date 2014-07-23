@@ -52,7 +52,7 @@ const (
 	// Below is a valid VERSION visible and modifiable by the gobump program.
 	// So this program can accept itself as input. Big woop.
 	//
-	VERSION = "0.0.2"
+	VERSION = "0.0.10"
 )
 
 type howhigh byte
@@ -64,13 +64,32 @@ const (
 )
 
 var (
-	commit = flag.Bool("commit", false, "make a commit after bumping")
-	tag    = flag.Bool("tag", false, "tag commit, if combined with --commit will tag that commit")
+	nocommit = flag.Bool("no-commit", false, "make a commit after bumping")
+	tag      = flag.Bool("tag", false, "tag the new commit, or if --no-commit, tag the current")
+	help     = flag.Bool("help", false, "show this message")
 )
+
+func usage() {
+	fmt.Fprintln(os.Stderr, `usage: gobump [flags] [major|minor|patch]
+
+If [major|minor|patch] is not given, defaults to "patch"`)
+
+	flag.PrintDefaults()
+	os.Exit(2)
+}
+
+func shortUsage() {
+	fmt.Fprintln(os.Stderr, `usage: gobump [flags] [major|minor|patch]`)
+	os.Exit(2)
+}
 
 func main() {
 	flag.Parse()
 	args := flag.Args()
+
+	if *help {
+		usage()
+	}
 
 	pwd, err := os.Getwd()
 	if err != nil {
@@ -87,7 +106,7 @@ func main() {
 		case "patch":
 			h = Patch
 		default:
-			log.Fatalln("invalid bump, can only be one of [major, minor, patch]")
+			shortUsage()
 		}
 	}
 
@@ -97,8 +116,7 @@ func main() {
 	}
 
 	var out bool
-	// TODO git commit, tag
-	if *commit {
+	if !*nocommit {
 		out = true
 		gitcommit(fname, bump)
 	}
@@ -181,7 +199,12 @@ func writeNew(f *os.File, v string, offset, length int64) error {
 		return err
 	}
 
-	return ioutil.WriteFile(f.Name(), buf.Bytes(), 0666)
+	stat, err := f.Stat()
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(f.Name(), buf.Bytes(), stat.Mode())
 }
 
 // Increments "XX.YY.ZZ" appropriately, expected input has string delimiters removed.
