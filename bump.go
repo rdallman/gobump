@@ -16,6 +16,10 @@ import (
 	"strings"
 )
 
+// TODO hah, const must have value. doh. remove all that logic
+// TODO look at gopkg.in versioning, consider compatibility
+// TODO usage() info in --help
+
 const (
 	// VERSION is of the form:
 	//
@@ -55,9 +59,6 @@ const (
 	Minor
 	Patch
 )
-
-// TODO hah, const must have value. remove all that logic
-// TODO look at gopkg.in versioning, consider compatibility
 
 var (
 	commit = flag.Bool("commit", false, "make a commit after bumping")
