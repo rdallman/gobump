@@ -2,6 +2,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"flag"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"go/parser"
 	"go/token"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -16,6 +18,7 @@ import (
 	"strings"
 )
 
+// TODO fix 9->10 extra byte rolloff the "right" way
 // TODO hah, const must have value. doh. remove all that logic
 // TODO look at gopkg.in versioning, consider compatibility
 // TODO usage() info in --help
@@ -153,32 +156,32 @@ func Bump(h howhigh, pkg string) (fname, version string, err error) {
 	return fname, newv, nil
 }
 
+// Write out the changes to the file in place.
 func writeNew(f *os.File, v string, offset, length int64) error {
-	_, err := f.Seek(offset, 0) // less error prone
+	_, err := f.Seek(0, 0) // reset reader
 	if err != nil {
 		return err
 	}
-	stat, err := f.Stat()
+	// Read from old file, write changes out to buffer.
+	var buf bytes.Buffer
+	_, err = io.CopyN(&buf, f, offset) // write up to change
 	if err != nil {
 		return err
 	}
-	// TODO this is just off, need to get a separate reader and writer for file
-	r := io.NewSectionReader(f, offset+int64(len(v)), stat.Size()-offset+length)
-	_, err = f.Seek(offset, 0) // less error prone
+	_, err = io.CopyN(ioutil.Discard, f, length) // scrap the old
 	if err != nil {
 		return err
 	}
-	_, err = io.WriteString(f, v) // write the new
+	_, err = io.WriteString(&buf, v) // write the new
 	if err != nil {
 		return err
 	}
-	_, err = io.Copy(f, r) // write the rest
+	_, err = io.Copy(&buf, f) // write the rest
 	if err != nil {
 		return err
 	}
 
-	//f.Sync()
-	return nil
+	return ioutil.WriteFile(f.Name(), buf.Bytes(), 0666)
 }
 
 // Increments "XX.YY.ZZ" appropriately, expected input has string delimiters removed.
