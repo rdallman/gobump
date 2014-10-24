@@ -15,7 +15,8 @@ import (
 // TODO look at gopkg.in versioning, consider compatibility
 
 const (
-	// VERSION is of the form:
+	// package gobump expects semantic versioning, where version
+	// is a package level constant named `Version` of the form:
 	//
 	//    XX.YY.ZZ
 	//
@@ -31,25 +32,26 @@ const (
 	// to the right of the one being incremented will be cleared.
 	//
 	// XX, YY, and ZZ can have unbounded length
-	// within the limitations of the given machine's architecture.
+	// ...within the limitations of the given machine's architecture ;)
 	//
-	// Invoking gobump on a package will only increment XX, YY or ZZ by one.
+	// Invoking `gobump` on a package will only increment XX, YY or ZZ by one.
 	// They are assumed to be numeric and puppies will die if you try to version
 	// otherwise.
 	//
-	// VERSION can only be interpreted as a CONST at the package level,
+	// `Version` can only be interpreted as a const at the package level,
 	// and its declaration may be placed in any file within a package.
 	//
-	// Below is a valid VERSION visible and modifiable by the gobump program.
+	// Below is a valid `Version`, visible and modifiable by the gobump program.
 	// So this program can accept itself as input. Big woop.
 	//
-	VERSION = "0.0.5"
+	Version = "0.0.12"
 )
 
 var (
-	nocommit = flag.Bool("no-commit", false, "don't make a commit after bumping")
-	tag      = flag.Bool("tag", false, "tag the new commit, or if --no-commit, tag the current")
+	nocommit = flag.Bool("no-commit", false, "don't make a commit after bumping, commit by default")
+	notag    = flag.Bool("no-tag", false, "don't tag the new commit, by default tags the current or new commit")
 	help     = flag.Bool("help", false, "show this message")
+	help2    = flag.Bool("h", false, "show this message")
 )
 
 const cmd = `usage: gobump [flags] [major|minor|patch] [go package]`
@@ -75,7 +77,7 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 
-	if *help {
+	if *help || *help2 {
 		usage()
 	}
 
@@ -100,7 +102,11 @@ func main() {
 			log.Fatalln("strange things are afoot at the circle K:", err)
 		}
 	} else {
-		pkg = args[1]
+		gopath := os.ExpandEnv("$GOPATH") + "/src/"
+		if gopath == "/src/" {
+			log.Fatalln("who are you? who? who? ... who? who?")
+		}
+		pkg = gopath + args[1]
 	}
 
 	fname, bumped, err := bump.Bump(h, pkg)
@@ -113,7 +119,7 @@ func main() {
 		out = true
 		bump.GitCommit(fname, bumped)
 	}
-	if *tag {
+	if !*notag {
 		bump.GitTag(bumped)
 	}
 
