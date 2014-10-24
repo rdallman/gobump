@@ -1,4 +1,4 @@
-// Package provides simple version bumping CLI that is kept inside a go variable for use.
+// package bump provides a library for bumping or finding versions in go source packages.
 package bump
 
 import (

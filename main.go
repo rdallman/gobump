@@ -1,4 +1,32 @@
-// Package provides simple version bumping CLI that is kept inside a go variable for use.
+// package gobump is a CLI tool for bumping semantic versions of go packages.
+//
+// gobump expects semantic versioning, where version
+// is a package level constant named `Version` of the form:
+//
+//    const Version = 'XX.YY.ZZ'
+//
+// Where:
+//
+//        XX == Major Version
+//        YY == Minor Version
+//        ZZ == Patch Version
+//
+// XX is mandatory, whereas YY and ZZ are optional.
+// Additionally, there can be no ZZ without a YY.
+// If invoking the bumping of a patch or minor version
+// when one does not exist, all necessary fields will be created
+// and the rightmost incremented. Accordingly, all values
+// to the right of the one being incremented will be cleared.
+//
+// XX, YY, and ZZ can have unbounded length.
+// ...within the limitations of the given machine's architecture.
+//
+// Invoking `gobump` on a package will only increment XX, YY or ZZ by one.
+// They are assumed to be numeric and puppies will die if you try to version
+// otherwise.
+//
+// `Version` can only be interpreted as a const at the package level,
+// and its declaration may be placed in any file within a package.
 package main
 
 import (
@@ -15,35 +43,8 @@ import (
 // TODO look at gopkg.in versioning, consider compatibility
 
 const (
-	// package gobump expects semantic versioning, where version
-	// is a package level constant named `Version` of the form:
-	//
-	//    XX.YY.ZZ
-	//
-	// Where  XX == Major Version
-	//        YY == Minor Version
-	//        ZZ == Patch Version
-	//
-	// XX is mandatory, whereas YY and ZZ are optional.
-	// Additionally, there can be no ZZ without a YY.
-	// If invoking the bumping of a patch or minor version
-	// when one does not exist, all necessary fields will be created
-	// and the rightmost incremented. Accordingly, all values
-	// to the right of the one being incremented will be cleared.
-	//
-	// XX, YY, and ZZ can have unbounded length
-	// ...within the limitations of the given machine's architecture ;)
-	//
-	// Invoking `gobump` on a package will only increment XX, YY or ZZ by one.
-	// They are assumed to be numeric and puppies will die if you try to version
-	// otherwise.
-	//
-	// `Version` can only be interpreted as a const at the package level,
-	// and its declaration may be placed in any file within a package.
-	//
 	// Below is a valid `Version`, visible and modifiable by the gobump program.
 	// So this program can accept itself as input. Big woop.
-	//
 	Version = "0.0.12"
 )
 
