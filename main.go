@@ -45,7 +45,7 @@ import (
 const (
 	// Below is a valid `Version`, visible and modifiable by the gobump program.
 	// So this program can accept itself as input. Big woop.
-	Version = "0.0.12"
+	Version = "0.0.13"
 )
 
 var (
@@ -103,11 +103,7 @@ func main() {
 			log.Fatalln("strange things are afoot at the circle K:", err)
 		}
 	} else {
-		gopath := os.ExpandEnv("$GOPATH") + "/src/"
-		if gopath == "/src/" {
-			log.Fatalln("who are you? who? who? ... who? who?")
-		}
-		pkg = gopath + args[1]
+		pkg = args[1]
 	}
 
 	fname, bumped, err := bump.Bump(h, pkg)
