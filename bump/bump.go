@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -29,7 +30,12 @@ const (
 )
 
 func Bump(h howhigh, pkg string) (fname, version string, err error) {
-	fset, pos, end, err := findVersion(pkg)
+	abs, err := pkgToAbs(pkg)
+	if err != nil {
+		return "", "", err
+	}
+
+	fset, pos, end, err := findVersion(abs)
 	if err != nil {
 		return "", "", err
 	}
@@ -62,7 +68,12 @@ func Bump(h howhigh, pkg string) (fname, version string, err error) {
 }
 
 func WhatAmI(pkg string) (cur string, err error) {
-	fset, pos, end, err := findVersion(pkg)
+	abs, err := pkgToAbs(pkg)
+	if err != nil {
+		return "", err
+	}
+
+	fset, pos, end, err := findVersion(abs)
 	if err != nil {
 		return "", err
 	}
@@ -89,6 +100,18 @@ func GitCommit(fname, version string) {
 func GitTag(version string) {
 	out, _ := exec.Command("git", "tag", version).CombinedOutput()
 	fmt.Printf("%s", string(out))
+}
+
+func pkgToAbs(pkg string) (string, error) {
+	if filepath.IsAbs(pkg) {
+		return pkg, nil
+	}
+
+	gopath := os.ExpandEnv("$GOPATH") + "/src/"
+	if gopath == "/src/" {
+		return "", errors.New("GOPATH not set")
+	}
+	return gopath + pkg, nil
 }
 
 // Write out the changes to the file in place.
