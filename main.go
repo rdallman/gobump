@@ -45,7 +45,7 @@ import (
 const (
 	// Below is a valid `Version`, visible and modifiable by the gobump program.
 	// So this program can accept itself as input. Big woop.
-	Version = "0.0.15"
+	Version = "0.0.16"
 )
 
 var (
